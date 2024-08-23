@@ -16,6 +16,8 @@ const timeZone = "system";
 
 const app = express();
 
+// Добавляем возможность сервера работать с нашими статичными файлами
+app.use(express.static(path.join(__dirname, "public")));
 /*
 app.get('/hello', (req, res) => {
     res.send("Hello world!");
@@ -31,6 +33,8 @@ const loadBuses = async () => {
 
 const getNextDeparture = (firstDepartureTime, frequencyMinutes) => {
     const now = DateTime.now().setZone(timeZone);
+    console.log('now: ', now);
+    
     const [hours, minutes] = firstDepartureTime.split(":").map(Number);
 
     let departure = DateTime.now().set({ hours, minutes }).setZone(timeZone);
@@ -61,6 +65,8 @@ const getNextDeparture = (firstDepartureTime, frequencyMinutes) => {
     return departure;
 };
 
+
+
 // ВЫЧИСЛЯЕМ КОГАДА АВТОБУСЫ ОТПРАВЛЯЮТСЯ
 const sendUpdatedData = async () => {
     const buses = await loadBuses();
@@ -77,7 +83,7 @@ const sendUpdatedData = async () => {
         return {
             ...bus,
             nextDeparture: {
-                data: nextDeparture.toFormat("yyyy-MM-dd"),
+                date: nextDeparture.toFormat("yyyy-MM-dd"),
                 time: nextDeparture.toFormat("HH:mm:ss"),
             },
         };
@@ -88,11 +94,23 @@ const sendUpdatedData = async () => {
 
 // const updatedBuses = sendUpdatedData();
 
+const sortBuses = (buses) => 
+    [...buses].sort(
+        (a, b) => 
+        new Date(`${a.nextDeparture.date}T${a.nextDeparture.time}Z`) - 
+        new Date(`${b.nextDeparture.date}T${b.nextDeparture.time}Z`),
+    );
+
+
+
 app.get("/next-departure", async (req, res) => {
     try {
         const updatedBuses = await sendUpdatedData();
         // console.log('updatedBuses: ', updatedBuses);
-        res.json(updatedBuses);
+        const sortedBuses = sortBuses(updatedBuses);
+        // console.log('sortedBuses: ', sortedBuses);
+
+        res.json(sortedBuses);
     } catch {
         res.status(500);
         res.send("error");
