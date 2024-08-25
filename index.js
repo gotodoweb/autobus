@@ -40,25 +40,31 @@ const getNextDeparture = (firstDepartureTime, frequencyMinutes) => {
     const [hour, minute] = firstDepartureTime.split(":").map(Number);
 
     let departure = DateTime.now().set({ hour, minute, second: 0, millisecond: 0 }).setZone(timeZone);
+    // let checkDeparture = DateTime.now().set({ hour, minute, second: 0, millisecond: 0 }).setZone(timeZone);
+
     // console.log('departure: ', departure);
 
-    if (now > departure) {
-        departure = departure.plus({ minutes: frequencyMinutes });
-    }
+    // if (now > departure) {
+    //     departure = departure.plus({ minutes: frequencyMinutes });
+    // }
 
     const endOfDay = DateTime.now().set({ hour: 23, minute: 59, second: 59 }).setZone(timeZone);
+    // console.log('endOfDay: ', endOfDay);
 
-    if (departure > endOfDay) {
-        departure = departure.startOf("day").plus({ days: 1 }).set({ hour, minute });
-    }
+
+    
 
     while (now > departure) {
-        departure = departure.plus({ minutes: frequencyMinutes });
+        departure = departure.plus({ minutes: frequencyMinutes });        
 
         if (departure > endOfDay) {
-            departure = departure.startOf("day").plus({ days: 1 }).set({ hour, minute });
+            departure = DateTime.now().set({ hour, minute, second: 0, millisecond: 0 }).plus({ days: 1 }).setZone(timeZone);
         }
     }
+
+    // if (departure > endOfDay) {
+    //     departure = departure.startOf("day").plus({ days: 1 }).set({ hour, minute }).setZone(timeZone);
+    // }
 
     return departure;
 };
@@ -66,7 +72,7 @@ const getNextDeparture = (firstDepartureTime, frequencyMinutes) => {
 
 
 // ВЫЧИСЛЯЕМ КОГАДА АВТОБУСЫ ОТПРАВЛЯЮТСЯ
-const sendUpdatedData = async () => {    
+const sendUpdatedData = async () => {
     const buses = await loadBuses();
     const now = DateTime.now().setZone(timeZone);
 
@@ -109,7 +115,7 @@ app.get("/next-departure", async (req, res) => {
         const sortedBuses = sortBuses(updatedBuses);
         // console.log('sortedBuses: ', sortedBuses);
         res.json(sortedBuses);
-    } catch(error) {
+    } catch (error) {
         res.send(`error from next-departure: ${error}`);
     }
 });
